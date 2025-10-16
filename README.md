@@ -102,7 +102,7 @@ El proyecto evoluciona desde una simulación simple hasta un sistema completo co
 Demuestra **el uso de POO, SQL y manejo de datos en Python**, siendo una excelente base para un
 sistema de biblioteca profesional.
 ---
-■ **Autor:** Proyecto educativo
+■ **Autor:** Brandon
 ■ **Lenguaje:** Python 3.x
 ■ **Base de Datos:** MySQL
 ■ **Versión:** 2.1 (comparativa mejorada)
