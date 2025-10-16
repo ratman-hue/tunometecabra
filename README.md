@@ -70,11 +70,11 @@ capa de conexión |
 ## ■■ Ejecución
 ### Versión de Prueba
 ```bash
-python biblioteca_local.py
+python base de datos.py
 ```
 ### Versión Real
 ```bash
-python biblioteca_mysql.py
+python base de datos prueba.py
 ```
 > **Nota:** Antes de ejecutar la versión con MySQL, crea la base de datos `biblioteca` y ajusta las
 credenciales:
