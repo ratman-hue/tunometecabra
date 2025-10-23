@@ -1,13 +1,50 @@
+import mysql.connector
 from datetime import datetime
+
+# =====================================================
+# Clase de Conexión a la Base de Datos
+# =====================================================
+class ConexionBD:
+    def __init__(self):
+        try:
+            self.conexion = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="toor",  # Cambiar si tu contraseña es diferente
+                database="biblioteca",
+                buffered=True
+            )
+            self.cursor = self.conexion.cursor(dictionary=True, buffered=True)
+            print("✅ Conexión establecida correctamente.")
+        except mysql.connector.Error as e:
+            print("❌ Error al conectar con la base de datos:", e)
+            self.conexion = None
+            self.cursor = None
+
+    def ejecutar(self, query, valores=None, fetch=False):
+        try:
+            cursor = self.conexion.cursor(dictionary=True, buffered=True)
+            cursor.execute(query, valores or ())
+            if fetch:
+                return cursor.fetchall()
+            self.conexion.commit()
+            return cursor
+        except mysql.connector.Error as e:
+            print("⚠️ Error en la consulta:", e)
+            return None
+
+    def cerrar(self):
+        if self.cursor:
+            self.cursor.close()
+        if self.conexion:
+            self.conexion.close()
 
 # =====================================================
 # Clases base
 # =====================================================
 class Libro:
-    _contador_id = 1
-    def __init__(self, titulo, autor, anio, disponible=True):
-        self.id = Libro._contador_id
-        Libro._contador_id += 1
+    def __init__(self, id, titulo, autor, anio, disponible=True):
+        self.id = id
         self.__titulo = titulo
         self.__autor = autor
         self.__anio = anio
@@ -25,10 +62,8 @@ class Libro:
 
 
 class Usuario:
-    _contador_id = 1
-    def __init__(self, nombre, tipo):
-        self.id = Usuario._contador_id
-        Usuario._contador_id += 1
+    def __init__(self, id, nombre, tipo):
+        self.id = id
         self.__nombre = nombre
         self.__tipo = tipo
 
@@ -40,13 +75,11 @@ class Usuario:
 
 
 class Prestamo:
-    _contador_id = 1
-    def __init__(self, usuario, libro, fecha_prestamo=None, fecha_devolucion=None):
-        self.id = Prestamo._contador_id
-        Prestamo._contador_id += 1
+    def __init__(self, id, usuario, libro, fecha_prestamo, fecha_devolucion=None):
+        self.id = id
         self.__usuario = usuario
         self.__libro = libro
-        self.__fecha_prestamo = fecha_prestamo or datetime.now().strftime('%Y-%m-%d')
+        self.__fecha_prestamo = fecha_prestamo
         self.__fecha_devolucion = fecha_devolucion
 
     def devolver(self):
@@ -61,54 +94,35 @@ class Prestamo:
         fecha_dev = self.__fecha_devolucion if self.__fecha_devolucion else "Pendiente"
         return f"#{self.id} | {self.__usuario.get_nombre()} → {self.__libro.get_titulo()} | Prestado: {self.__fecha_prestamo} | Dev: {fecha_dev}"
 
-
 # =====================================================
-# Clase Biblioteca (simula la base de datos)
+# Clase Biblioteca (usa la base de datos)
 # =====================================================
 class Biblioteca:
-    def __init__(self):
+    def __init__(self, conexion):
+        self.conexion = conexion
         self.libros = []
         self.usuarios = []
         self.prestamos = []
 
-    # ---------- Registrar ----------
-    def registrar_libro(self, titulo, autor, anio):
-        libro = Libro(titulo, autor, anio)
-        self.libros.append(libro)
-        print(f"✅ Libro registrado: {libro.get_titulo()}")
+    def cargar_datos(self):
+        # Cargar usuarios
+        usuarios_bd = self.conexion.ejecutar("SELECT * FROM usuarios", fetch=True)
+        for u in usuarios_bd:
+            self.usuarios.append(Usuario(u["id"], u["nombre"], u["tipo"]))
 
-    def registrar_usuario(self, nombre, tipo):
-        usuario = Usuario(nombre, tipo)
-        self.usuarios.append(usuario)
-        print(f"✅ Usuario registrado: {usuario.get_nombre()}")
+        # Cargar libros
+        libros_bd = self.conexion.ejecutar("SELECT * FROM libros", fetch=True)
+        for l in libros_bd:
+            self.libros.append(Libro(l["id"], l["titulo"], l["autor"], l["anio"], l["disponible"]))
 
-    def registrar_prestamo(self, id_usuario, id_libro):
-        usuario = next((u for u in self.usuarios if u.id == id_usuario), None)
-        libro = next((l for l in self.libros if l.id == id_libro), None)
+        # Cargar préstamos
+        prestamos_bd = self.conexion.ejecutar("SELECT * FROM prestamos", fetch=True)
+        for p in prestamos_bd:
+            usuario = next((u for u in self.usuarios if u.id == p["id_usuario"]), None)
+            libro = next((l for l in self.libros if l.id == p["id_libro"]), None)
+            if usuario and libro:
+                self.prestamos.append(Prestamo(p["id"], usuario, libro, p["fecha_prestamo"], p["fecha_devolucion"]))
 
-        if not usuario:
-            print("❌ El usuario no existe.")
-            return
-        if not libro:
-            print("❌ El libro no existe.")
-            return
-        if not libro.get_disponible():
-            print("⚠️ El libro no está disponible.")
-            return
-
-        libro.set_disponible(False)
-        prestamo = Prestamo(usuario, libro)
-        self.prestamos.append(prestamo)
-        print(f"📚 Préstamo registrado: {usuario.get_nombre()} → {libro.get_titulo()}")
-
-    def devolver_libro(self, id_prestamo):
-        prestamo = next((p for p in self.prestamos if p.id == id_prestamo), None)
-        if not prestamo:
-            print("❌ No se encontró el préstamo.")
-            return
-        prestamo.devolver()
-
-    # ---------- Listar ----------
     def listar_libros(self):
         print("\n📚 Lista de Libros:")
         if not self.libros:
@@ -133,33 +147,16 @@ class Biblioteca:
         for p in self.prestamos:
             print(p)
 
-
 # =====================================================
-# Ejecución automática (sin conexión, sin menú)
+# Ejecución automática
 # =====================================================
 if __name__ == "__main__":
-    biblioteca = Biblioteca()
-
-    # 1️⃣ Registrar usuarios
-    biblioteca.registrar_usuario("Ana López", "Estudiante")
-    biblioteca.registrar_usuario("Luis Pérez", "Profesor")
-    biblioteca.registrar_usuario("María Torres", "Visitante")
-
-    # 2️⃣ Registrar libros
-    biblioteca.registrar_libro("Cien años de soledad", "Gabriel García Márquez", 1967)
-    biblioteca.registrar_libro("El Principito", "Antoine de Saint-Exupéry", 1943)
-    biblioteca.registrar_libro("1984", "George Orwell", 1949)
-
-    # 3️⃣ Registrar préstamos
-    biblioteca.registrar_prestamo(1, 1)
-    biblioteca.registrar_prestamo(2, 2)
-
-    # 4️⃣ Devolver un libro
-    biblioteca.devolver_libro(1)
-
-    # 5️⃣ Listar todo
-    biblioteca.listar_usuarios()
-    biblioteca.listar_libros()
-    biblioteca.listar_prestamos()
-
-    print("\n🔚 Ejecución finalizada (sin base de datos).")
+    conexion = ConexionBD()
+    if conexion.conexion:
+        biblioteca = Biblioteca(conexion)
+        biblioteca.cargar_datos()
+        biblioteca.listar_usuarios()
+        biblioteca.listar_libros()
+        biblioteca.listar_prestamos()
+        conexion.cerrar()
+        print("\n🔚 Ejecución finalizada (con base de datos).")
