@@ -1,108 +1,64 @@
-# Sistema de Biblioteca en Python (Con y Sin Base de Datos)
-Este proyecto es un **sistema de gestión de biblioteca** desarrollado en Python, que incluye dos
-versiones:
-una **de prueba (sin base de datos)** y una **versión real con conexión MySQL**.
+Comparativa y Explicación de Códigos - Sistema de
+Biblioteca en Python
+■ Descripción General
+Este documento compara dos versiones del sistema de gestión de biblioteca desarrollado en Python
+con conexión a MySQL.
+Ambas versiones permiten manejar **libros, usuarios y préstamos**, pero difieren en su **estructura**,
+**nivel de modularidad** y **alcance funcional**.
 ---
-## ■ Versión de Prueba (Sin Base de Datos)
-Esta versión usa **listas internas** como almacenamiento temporal, simulando una base de datos.
-Ideal para aprendizaje de Programación Orientada a Objetos (POO) sin necesidad de instalación de
-MySQL.
-### Estructura
-- **Libro:** Contiene título, autor, año y disponibilidad.
-- **Usuario:** Registra nombre y tipo de usuario.
-- **Prestamo:** Controla la relación entre libro y usuario, con fechas de préstamo y devolución.
-- **Biblioteca:** Gestiona los registros de usuarios, libros y préstamos en memoria.
-### Ventajas
-- Rápida ejecución, sin dependencias externas.
-- Código simple y claro para entender POO.
-- Perfecto para pruebas o entornos educativos.
+■ PRIMER CÓDIGO: Versión Orientada a Clases Internas
+■ Funcionalidad
+Esta primera versión utiliza un enfoque totalmente orientado a objetos (POO). Las clases **Libro**,
+**Usuario**, **Prestamo** y **Biblioteca** están diseñadas para trabajar **en memoria** con los datos
+cargados desde la base de datos.
+- La clase `Biblioteca` actúa como contenedor central de datos.
+- Los métodos `listar_libros`, `listar_usuarios` y `listar_prestamos` imprimen la información
+almacenada.
+- No permite registrar, actualizar o eliminar registros directamente desde el código (solo lectura).
+- Se enfoca en cargar y visualizar información.
+■ Características Técnicas
+- Uso de POO con encapsulación (`__atributos`).
+- Conexión MySQL persistente mediante `mysql.connector`.
+- Uso de `fetch=True` para traer los datos como diccionarios.
+- Ideal para análisis y visualización de datos de la base de datos.
+■■ Limitaciones
+- No se pueden agregar nuevos libros, usuarios o préstamos desde el programa.
+- No hay interacción dinámica con el usuario (sin menú).
+- La devolución de libros solo se simula en memoria, sin reflejarse en la base de datos.
 ---
-## ■■ Versión Real (Conexión MySQL)
-Esta versión implementa **persistencia de datos** mediante una base de datos MySQL.
-Integra todas las operaciones de la versión de prueba, pero con consultas SQL reales y validaciones
-más sólidas.
-### Componentes
-- **Clase `ConexionBD`:** Crea y administra la conexión a MySQL.
-- **Clases `Libro`, `Usuario`, `Prestamo`:** Incluyen métodos para insertar y actualizar datos en tablas
-reales.
-- **Menú interactivo:** Permite ejecutar operaciones desde consola de forma dinámica.
-### Tablas requeridas
-```sql
-CREATE TABLE usuarios (
-id INT AUTO_INCREMENT PRIMARY KEY,
-nombre VARCHAR(100),
-tipo VARCHAR(50)
-);
-CREATE TABLE libros (
-id INT AUTO_INCREMENT PRIMARY KEY,
-titulo VARCHAR(150),
-autor VARCHAR(100),
-anio INT,
-disponible BOOLEAN DEFAULT TRUE
-);
-CREATE TABLE prestamos (
-id INT AUTO_INCREMENT PRIMARY KEY,
-id_usuario INT,
-id_libro INT,
-fecha_prestamo DATE,
-fecha_devolucion DATE,
-FOREIGN KEY (id_usuario) REFERENCES usuarios(id),
-FOREIGN KEY (id_libro) REFERENCES libros(id)
-);
-```
+■ SEGUNDO CÓDIGO: Versión Interactiva con Menú
+■ Funcionalidad
+Esta versión amplía las capacidades del sistema para permitir **registro, préstamo y devolución de
+libros**, además de listar datos.
+Introduce una **interfaz por consola** para la interacción del usuario.
+■ Mejoras Clave Respecto al Primer Código
+| Aspecto | Primer Código | Segundo Código |
+|----------|----------------|----------------|
+| **Interacción** | No interactivo | Menú con opciones dinámicas |
+| **Registros** | Solo lectura | Permite agregar libros, usuarios y préstamos |
+| **Actualización BD** | No se actualiza la base | Modifica directamente la base (INSERT, UPDATE) |
+| **Devolución de libros** | Solo lógica interna | Actualiza `fecha_devolucion` y `disponible` en la BD |
+| **Modularidad** | Todo en clases | Combina POO y funciones prácticas |
+| **Usabilidad** | Uso programático | Uso directo desde consola |
+■ Funciones principales del Menú
+1. **Registrar libro** – Inserta un nuevo libro en la tabla `libros`.
+2. **Registrar usuario** – Inserta un nuevo usuario en la tabla `usuarios`.
+3. **Registrar préstamo** – Crea un préstamo y actualiza el estado del libro a “no disponible”.
+4. **Devolver libro** – Marca el préstamo como devuelto y vuelve a habilitar el libro.
+5. **Listar libros/usuarios/préstamos** – Muestra los registros almacenados.
+6. **Salir** – Cierra la conexión con MySQL de manera segura.
+■ Beneficios
+- Total integración con la base de datos.
+- Estructura más flexible para ampliaciones.
+- Ideal para un sistema de gestión real o prototipo funcional.
 ---
-## ■ Comparativa y Mejoras entre Versiones
-| Aspecto | Código de Prueba (Sin BD) | Código Real (Con MySQL) |
-|----------|----------------------------|--------------------------|
-| **Almacenamiento** | Listas en memoria | Tablas persistentes en MySQL |
-| **Persistencia** | Los datos se pierden al cerrar el programa | Los datos permanecen guardados |
-| **Ejecución** | Automática, sin menú | Menú interactivo para elegir acciones |
-| **Validaciones** | Limitadas (solo por lógica local) | Reales con consultas SQL (existencia,
-disponibilidad) |
-| **Actualización del estado del libro** | Cambia en memoria | Se actualiza en la base de datos |
-| **Listados** | Muestra objetos creados en memoria | Muestra datos con consultas `JOIN` |
-| **Escalabilidad** | Limitada a una sesión | Preparada para múltiples usuarios reales |
-| **Código modular** | Todo contenido en una sola clase central | Dividido en clases independientes +
-capa de conexión |
-| **Uso educativo** | Ideal para practicar POO básica | Ideal para practicar CRUD y POO aplicada a BD
-|
+■ Conclusión
+El **primer código** es un diseño inicial, útil para representar la lógica y estructura base del sistema.
+El **segundo código** representa una **evolución completa**, integrando la lógica orientada a objetos
+con un sistema interactivo y persistencia real de datos.
+**En resumen:**
+> El segundo código convierte una maqueta funcional en un sistema real de gestión de biblioteca con
+base de datos MySQL.
 ---
-## ■■ Ejecución
-### Versión de Prueba
-```bash
-python base de datos.py
-```
-### Versión Real
-```bash
-python base de datos prueba.py
-```
-> **Nota:** Antes de ejecutar la versión con MySQL, crea la base de datos `biblioteca` y ajusta las
-credenciales:
-```python
-host="localhost",
-user="root",
-password="tu_contraseña",
-database="biblioteca"
-```
----
-## ■ Mejoras Técnicas Implementadas
-1. **Conexión persistente a base de datos** mediante `mysql.connector`.
-2. **Consultas parametrizadas** para evitar inyección SQL.
-3. **Separación de responsabilidades:** cada clase maneja su propia lógica.
-4. **Sistema de menú interactivo** que facilita la navegación y evita ejecuciones automáticas.
-5. **Gestión de errores** mediante excepciones (`try/except`) en conexión y consultas.
-6. **Validación de existencia de registros** antes de ejecutar préstamos o devoluciones.
-7. **Actualización automática** del estado de los libros al devolverlos.
-8. **Consultas con `JOIN`** para mostrar información combinada de usuarios, libros y préstamos.
-9. **Cierre seguro** de la conexión a la base de datos al salir del sistema.
-10. **Preparación para futuras expansiones** (roles, multas, historial, etc.).
----
-## ■ Conclusión
-El proyecto evoluciona desde una simulación simple hasta un sistema completo con persistencia real.
-Demuestra **el uso de POO, SQL y manejo de datos en Python**, siendo una excelente base para un
-sistema de biblioteca profesional.
----
-■ **Autor:** Brandon
-■ **Lenguaje:** Python 3.x
-■ **Base de Datos:** MySQL
-■ **Versión:** 2.1 (comparativa mejorada)
+✍■ **Autor:** Eduardo
+■■ **Fecha:** Octubre 2025
